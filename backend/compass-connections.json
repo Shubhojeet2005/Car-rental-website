@@ -1,0 +1,26 @@
+{
+  "type": "Compass Connections",
+  "version": {
+    "$numberInt": "1"
+  },
+  "connections": [
+    {
+      "id": "6de36778-e52b-49b7-bbc4-f40a0462bfa5",
+      "lastUsed": {
+        "$date": {
+          "$numberLong": "1771065056060"
+        }
+      },
+      "favorite": {
+        "name": "Shubhojeet_dd"
+      },
+      "savedConnectionType": "recent",
+      "connectionOptions": {
+        "connectionString": "mongodb://localhost:27017/",
+        "oidc": {
+          "serializedState": "eyJvaWRjUGx1Z2luU3RhdGVWZXJzaW9uIjoxLCJzdGF0ZSI6W119"
+        }
+      }
+    }
+  ]
+}
