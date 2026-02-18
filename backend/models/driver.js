@@ -1,7 +1,11 @@
 const mongoose= require('mongoose');
 
 const driverSchema= new mongoose.Schema({
-    name:{
+     firstname:{
+        type:String,
+        required:True
+    },
+    lastname:{
         type:String,
         required:True
     },

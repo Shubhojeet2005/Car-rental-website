@@ -75,6 +75,45 @@ router.post('/register',[
     }
 });
 
+router.post('/register_driver',[
+    body('firstname').notEmpty().withMessage('First name is required'),
+    body('lastname').notEmpty().withMessage('Last name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').isLength({min:6}).withMessage('Password must be at least 6 characters long'),
+    body('phone').notEmpty().withMessage('Lisence number is required'),
+    body('car_name').notEmpty().withMessage('Car name is required'),
+    body('Car_license_no').notEmpty().withMessage('Lisence number is required'),
+    body('doc_upload').notEmpty().withMessage('Document uploading is mandatory'),
+],async (req,res)=>{
+    const errors=validationResult(req);
+    if(!errors.isEmpty()){
+        return res.status(400).json({errors:errors.array()});
+    }
+    const {firstname,lastname,phone,car_license_no,car_name,doc_upload,password}=req.body;
+    try{
+        const existingUser=await userModel.findOne({email});
+        if(existingUser){
+            return res.status(400).json({message:'User already exists'});
+        }
+        const hashpassword = await bcrypt.hash(password,10);
+
+        const newUser= await userModel.create({
+            firstname,
+            lastname,
+            phone,
+            password:hashpassword,
+            car_name,
+            car_license_no,
+            doc_upload
+
+        });
+        res.status(201).json({message:'User registered successfully',user:newUser});
+    }catch(error){
+        console.error('Error registering user:',error);
+        res.status(500).json({message:'Server error'});
+    }
+});
+
 router.post('/login',[
     body('email').trim().isEmail().withMessage('Valid email is required'),
     body('password').trim().notEmpty().withMessage('Password is required')
