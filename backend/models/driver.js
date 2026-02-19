@@ -1,33 +1,57 @@
-const mongoose= require('mongoose');
+import mongoose from 'mongoose';
 
-const driverSchema= new mongoose.Schema({
-     firstname:{
-        type:String,
-        required:True
+const driverSchema = new mongoose.Schema(
+  {
+    firstname: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    lastname:{
-        type:String,
-        required:True
+    lastname: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    Phone:{
-        type:Number,
-        required:True
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    Car_license_no:{
-        type:String,
-        required:True,
-        
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    car_name:{
-        type:String,
-        required:True
+    car_license_no: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    doc_upload:{
-        type:String,
-        default:''
+    car_name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    doc_upload: {
+      type: String,
+      default: '',
+    },
+    car_picture: {
+      type: String,
+      default: '',
     },
     password: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
-})
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const driverModel = mongoose.models.Driver || mongoose.model('Driver', driverSchema);
+
+export default driverModel;

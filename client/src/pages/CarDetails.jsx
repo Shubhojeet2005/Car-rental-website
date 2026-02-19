@@ -3,13 +3,15 @@ import { useParams } from 'react-router-dom';
 import { carsData } from './Cars';
 import PlaceInputWithMap from '../components/PlaceInputWithMap';
 
+const API_URL = 'http://localhost:3000';
+
 const CarDetails = () => {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   // State to manage dynamic list of places
   const [places, setPlaces] = useState(['']); 
-
-  const car = carsData.find((c) => String(c.id) === id);
+  const [car, setCar] = useState(null);
+  const [loadingCar, setLoadingCar] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -19,6 +21,40 @@ const CarDetails = () => {
       } catch (_) {}
     }
   }, []);
+
+  useEffect(() => {
+    // Try to find in static data first
+    const localCar = carsData.find((c) => String(c.id) === String(id));
+    if (localCar) {
+      setCar(localCar);
+      setLoadingCar(false);
+      return;
+    }
+
+    const fetchCar = async () => {
+      try {
+        const res = await fetch(`${API_URL}/user/drivercars/${id}`);
+        const data = await res.json();
+        if (res.ok && data.car) {
+          setCar({
+            id: data.car._id,
+            name: data.car.name,
+            image: data.car.image,
+            charges: data.car.charges ?? 0,
+          });
+        } else {
+          setCar(null);
+        }
+      } catch (err) {
+        console.error('Error fetching car details:', err);
+        setCar(null);
+      } finally {
+        setLoadingCar(false);
+      }
+    };
+
+    fetchCar();
+  }, [id]);
 
   // Handlers for dynamic places
   const handleAddPlace = () => {
@@ -35,8 +71,6 @@ const CarDetails = () => {
     newPlaces[index] = value;
     setPlaces(newPlaces);
   };
-
-  const API_URL = 'http://localhost:3000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,6 +92,7 @@ const CarDetails = () => {
     }
   };
 
+  if (loadingCar) return <div className="text-white p-10">Loading car...</div>;
   if (!car) return <div className="text-white p-10">Car not found.</div>;
 
   return (

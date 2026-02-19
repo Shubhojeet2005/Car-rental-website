@@ -112,6 +112,8 @@ const Login = () => {
             <p className="text-slate-500 text-sm font-medium">
               New here? <Link to="/register" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Create an account</Link>
             </p>
+            <p><Link to="/driver-register" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Create a Driver account</Link></p>
+            <p><Link to="/driver-login" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Login as a Driver</Link></p>
           </div>
         </div>
       </div>
