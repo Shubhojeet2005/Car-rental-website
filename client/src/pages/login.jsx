@@ -1,7 +1,6 @@
 import React, { use, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from '../config';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -112,8 +111,8 @@ const Login = () => {
             <p className="text-slate-500 text-sm font-medium">
               New here? <Link to="/register" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Create an account</Link>
             </p>
-            <p><Link to="/driver-register" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Create a Driver account</Link></p>
-            <p><Link to="/driver-login" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Login as a Driver</Link></p>
+            <p><Link to="/driver-login" className="text-white hover:text-indigo-400 underline underline-offset-4 decoration-indigo-500/50 transition-colors">Login as Driver</Link></p>
+            <p><Link to="/admin/login" className="text-amber-400 hover:text-amber-300 underline underline-offset-4 decoration-amber-500/50 transition-colors">Admin Login</Link></p>
           </div>
         </div>
       </div>

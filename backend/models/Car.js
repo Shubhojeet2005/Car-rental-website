@@ -47,6 +47,11 @@ const carSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  driver:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Driver',
+    required: true
   }
 });
 

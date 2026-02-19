@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Cars, { carsData } from './Cars'
-
-const API_URL = 'http://localhost:3000'
+import { API_URL } from '../config'
 
 const Home = () => {
   const [user, setUser] = useState(null)
@@ -49,7 +48,7 @@ const Home = () => {
       const mapped = (data.cars || []).map((car) => ({
         id: car._id,
         name: car.name,
-        image: car.image,
+        image: car.image?.startsWith('/') ? `${API_URL}${car.image}` : car.image,
         charges: car.charges ?? 0,
       }))
       setDriverCars(mapped)

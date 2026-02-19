@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from '../../config';
 
 const DriverLogin = () => {
   const [email, setEmail] = useState('');
@@ -35,7 +34,7 @@ const DriverLogin = () => {
           localStorage.setItem('driver', JSON.stringify(data.user));
         }
       }
-      navigate('/drivercarpage');
+      navigate('/driver/notifications');
     } catch (err) {
       setError('Network error. Is the backend running on port 3000?');
     } finally {
@@ -130,7 +129,7 @@ const DriverLogin = () => {
 
           <div className="mt-10 pt-8 border-t border-white/10 text-center">
             <p className="text-slate-500 text-sm font-medium">
-              New here? <Link to="/register" className="text-white hover:text-indigo-400 font-bold transition-colors">Create an account</Link>
+              Driver accounts are created by admin. <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">Customer login</Link>
             </p>
           </div>
         </div>

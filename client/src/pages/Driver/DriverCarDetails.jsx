@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from '../../config';
 
 const DriverCarDetails = () => {
   const [formData, setFormData] = useState({

@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
 const formSchema = new mongoose.Schema({
+    driverId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Driver',
+        required: true
+    },
     carName: {
         type: String,
         required: true

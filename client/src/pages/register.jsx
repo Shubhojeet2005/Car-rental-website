@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from '../config';
 
 const Register = () => {
   const [formData, setFormData] = useState({

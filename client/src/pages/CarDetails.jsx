@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { carsData } from './Cars';
 import PlaceInputWithMap from '../components/PlaceInputWithMap';
-
-const API_URL = 'http://localhost:3000';
+import { API_URL } from '../config';
 
 const CarDetails = () => {
   const { id } = useParams();
   const [user, setUser] = useState(null);
-  // State to manage dynamic list of places
   const [places, setPlaces] = useState(['']); 
   const [car, setCar] = useState(null);
+  const [drivers, setDrivers] = useState([]);
+  const [selectedDriverId, setSelectedDriverId] = useState('');
   const [loadingCar, setLoadingCar] = useState(true);
+  const [loadingDrivers, setLoadingDrivers] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -36,11 +37,13 @@ const CarDetails = () => {
         const res = await fetch(`${API_URL}/user/drivercars/${id}`);
         const data = await res.json();
         if (res.ok && data.car) {
+          const img = data.car.image?.startsWith('/') ? `${API_URL}${data.car.image}` : data.car.image;
           setCar({
             id: data.car._id,
             name: data.car.name,
-            image: data.car.image,
+            image: img,
             charges: data.car.charges ?? 0,
+            driver: data.car.driver ? { name: data.car.driver.firstname ? `${data.car.driver.firstname} ${data.car.driver.lastname || ''}`.trim() : data.car.driver.name } : null,
           });
         } else {
           setCar(null);
@@ -55,6 +58,26 @@ const CarDetails = () => {
 
     fetchCar();
   }, [id]);
+
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const res = await fetch(`${API_URL}/user/drivers`);
+        const data = await res.json();
+        if (res.ok && data.drivers) {
+          setDrivers(data.drivers);
+          if (data.drivers.length > 0 && !selectedDriverId) {
+            setSelectedDriverId(data.drivers[0]._id);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching drivers:', err);
+      } finally {
+        setLoadingDrivers(false);
+      }
+    };
+    fetchDrivers();
+  }, []);
 
   // Handlers for dynamic places
   const handleAddPlace = () => {
@@ -74,9 +97,14 @@ const CarDetails = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedDriverId) {
+      alert('Please select a driver');
+      return;
+    }
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     data.itinerary = places.filter(p => p.trim() !== '');
+    data.driverId = selectedDriverId;
     try {
       const res = await fetch(`${API_URL}/user/book`, {
         method: 'POST',
@@ -108,6 +136,27 @@ const CarDetails = () => {
         <div className="flex flex-col">
           <label className="text-xs text-slate-400 mb-1">Car Model</label>
           <input type="text" name="carName" className="bg-slate-800 p-2 rounded border border-slate-700" value={car.name} readOnly />
+        </div>
+        <div className="flex flex-col md:col-span-2">
+          <label className="text-xs text-slate-400 mb-1">Select Driver *</label>
+          <select
+            name="driverId"
+            value={selectedDriverId}
+            onChange={(e) => setSelectedDriverId(e.target.value)}
+            className="bg-slate-800 p-2 rounded border border-slate-700 text-white"
+            required
+          >
+            <option value="">-- Choose a driver --</option>
+            {drivers.map((d) => (
+              <option key={d._id} value={d._id}>
+                {d.firstname} {d.lastname} - {d.phone}
+              </option>
+            ))}
+          </select>
+          {loadingDrivers && <span className="text-xs text-slate-500 mt-1">Loading drivers...</span>}
+          {!loadingDrivers && drivers.length === 0 && (
+            <span className="text-xs text-amber-400 mt-1">No drivers available. Admin must add drivers first.</span>
+          )}
         </div>
 
         <div className="flex flex-col">

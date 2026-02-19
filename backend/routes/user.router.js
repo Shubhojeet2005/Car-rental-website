@@ -4,6 +4,7 @@ import userModel from '../models/user.js';
 import driverModel from '../models/driver.js';
 import driverCarModel from '../models/driverCar.js';
 import formModel from '../models/form.js';
+import TripNotification from '../models/TripNotification.js';
 import bcrypt from 'bcrypt';
 import {body,validationResult} from 'express-validator';
 import multer from 'multer';
@@ -87,105 +88,21 @@ router.post('/register',[
     }
 });
 
-router.post(
-  '/register_driver',
-  upload.fields([
-    { name: 'doc_upload', maxCount: 1 },
-    { name: 'car_picture', maxCount: 1 },
-  ]),
-  [
-    body('firstname').notEmpty().withMessage('First name is required'),
-    body('lastname').notEmpty().withMessage('Last name is required'),
-    body('email').isEmail().withMessage('Valid email is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-    body('phone').notEmpty().withMessage('Phone number is required'),
-    body('car_name').notEmpty().withMessage('Car name is required'),
-    body('car_license_no').notEmpty().withMessage('License number is required'),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { firstname, lastname, email, phone, car_name, car_license_no, password } = req.body;
-
-    const docFile = req.files?.doc_upload?.[0];
-    const carPicFile = req.files?.car_picture?.[0];
-
-    if (!docFile || !carPicFile) {
-      return res.status(400).json({ message: 'Car picture and document are required' });
-    }
-
-    try {
-      const existingDriver = await driverModel.findOne({ email });
-      if (existingDriver) {
-        return res.status(400).json({ message: 'Driver already exists' });
-      }
-      const hashpassword = await bcrypt.hash(password, 10);
-
-      const newDriver = await driverModel.create({
-        firstname,
-        lastname,
-        email,
-        phone,
-        car_name,
-        car_license_no,
-        password: hashpassword,
-        doc_upload: `/uploads/${docFile.filename}`,
-        car_picture: `/uploads/${carPicFile.filename}`,
-      });
-      res.status(201).json({ message: 'Driver registered successfully', user: newDriver });
-    } catch (error) {
-      console.error('Error registering driver:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
+// Get all drivers (admin-created, for customer to select)
+router.get('/drivers', async (req, res) => {
+  try {
+    const drivers = await driverModel.find({ isActive: true }).select('-password').sort({ firstname: 1 });
+    res.status(200).json({ drivers });
+  } catch (error) {
+    console.error('Error fetching drivers:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-);
+});
 
-// Create a car listing by driver
-router.post(
-  '/drivercars',
-  upload.single('image'),
-  [
-    body('name').notEmpty().withMessage('Car name is required'),
-    body('charges')
-      .notEmpty()
-      .withMessage('Charges are required')
-      .isNumeric()
-      .withMessage('Charges must be a number'),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ message: 'Car image is required' });
-    }
-
-    const { name, charges, description = '' } = req.body;
-
-    try {
-      const car = await driverCarModel.create({
-        name,
-        charges: Number(charges),
-        description,
-        image: `/uploads/${req.file.filename}`,
-      });
-      res.status(201).json({ message: 'Car created successfully', car });
-    } catch (error) {
-      console.error('Error creating driver car:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  }
-);
-
-// Get all driver cars
+// Get all driver cars (populate driver if assigned)
 router.get('/drivercars', async (req, res) => {
   try {
-    const cars = await driverCarModel.find().sort({ createdAt: -1 });
+    const cars = await driverCarModel.find().populate('driver', 'firstname lastname email phone').sort({ createdAt: -1 });
     res.status(200).json({ cars });
   } catch (error) {
     console.error('Error fetching driver cars:', error);
@@ -193,10 +110,10 @@ router.get('/drivercars', async (req, res) => {
   }
 });
 
-// Get single driver car
+// Get single driver car (populate driver)
 router.get('/drivercars/:id', async (req, res) => {
   try {
-    const car = await driverCarModel.findById(req.params.id);
+    const car = await driverCarModel.findById(req.params.id).populate('driver', 'firstname lastname email phone');
     if (!car) {
       return res.status(404).json({ message: 'Car not found' });
     }
@@ -236,7 +153,8 @@ router.post('/login',[
                 email: user.email, 
                 firstname: user.firstname, 
                 lastname: user.lastname,
-                profilePicture: user.profilePicture || ''
+                profilePicture: user.profilePicture || '',
+                role: 'customer'
             }
         });
     } catch (error) {
@@ -279,6 +197,7 @@ router.post(
           phone: driver.phone,
           firstname: driver.firstname,
           lastname: driver.lastname,
+          role: 'driver',
         },
       });
     } catch (error) {
@@ -302,13 +221,21 @@ router.get('/profile/:id', async (req, res) => {
     }
 });
 
-// Book a car
+// Book a car (customer selects driver - driver receives notification)
 router.post('/book', async (req, res) => {
-    const { carName, email, passenger, date, time, days, hours, minutes, seconds, milliseconds, totalAmount, itinerary } = req.body;
+    const { driverId, carName, email, passenger, date, time, days, hours, minutes, seconds, milliseconds, totalAmount, itinerary } = req.body;
+    if (!driverId) {
+        return res.status(400).json({ message: 'Please select a driver' });
+    }
     try {
+        const driver = await driverModel.findById(driverId);
+        if (!driver || !driver.isActive) {
+            return res.status(400).json({ message: 'Invalid or inactive driver' });
+        }
         const places = Array.isArray(itinerary) ? itinerary : [];
         const [place1 = '', place2 = '', place3 = '', place4 = '', place5 = '', place6 = ''] = places;
         const payload = {
+            driverId,
             carName: carName || '',
             email: email || '',
             passenger: passenger ?? '',
@@ -323,9 +250,43 @@ router.post('/book', async (req, res) => {
             place1, place2, place3, place4, place5, place6
         };
         const newForm = await formModel.create(payload);
-        res.status(201).json({ message: 'Car booked successfully', form: newForm });
+        // Create trip notification for driver
+        await TripNotification.create({
+            driverId,
+            tripId: newForm._id,
+            message: `New trip booked: ${carName || 'Car'} - Pickup: ${date} at ${time}. Customer: ${email}`,
+            customerEmail: email,
+            carName: carName || '',
+            pickupDate: payload.date,
+            pickupTime: time || '',
+        });
+        res.status(201).json({ message: 'Car booked successfully. Driver has been notified.', form: newForm });
     } catch (error) {
         console.error('Error booking car:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get driver's trip notifications
+router.get('/driver/notifications/:driverId', async (req, res) => {
+    try {
+        const notifications = await TripNotification.find({ driverId: req.params.driverId })
+            .sort({ createdAt: -1 })
+            .limit(50);
+        res.status(200).json({ notifications });
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Mark notification as read
+router.put('/driver/notifications/:id/read', async (req, res) => {
+    try {
+        await TripNotification.findByIdAndUpdate(req.params.id, { read: true });
+        res.status(200).json({ message: 'Notification marked as read' });
+    } catch (error) {
+        console.error('Error updating notification:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });

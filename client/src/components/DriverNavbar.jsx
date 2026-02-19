@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL } from '../config'
 
-const Navbar = () => {
+const DriverNavbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [user, setUser] = useState(null)
@@ -40,8 +40,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', to: '/' },
-    { name: 'Features', to: '/features' },
-    { name: 'Pricing', to: '/pricing' },
+    { name: 'Trip Notifications', to: '/driver/notifications' },
     { name: 'About', to: '/about' },
   ]
 
@@ -79,7 +78,7 @@ const Navbar = () => {
             {user ? (
               <>
                 <Link
-                  to="/profile"
+                  to="/driver/notifications"
                   className="flex items-center gap-2 text-slate-300 hover:text-indigo-400 transition-colors font-medium text-sm"
                 >
                   {user.profilePicture ? (
@@ -93,7 +92,7 @@ const Navbar = () => {
                       {user.firstname?.[0]?.toUpperCase() || 'U'}
                     </div>
                   )}
-                  <span>Profile</span>
+                  <span>Notifications</span>
                 </Link>
                 <button
                   onClick={() => {
@@ -151,7 +150,7 @@ const Navbar = () => {
             {user ? (
               <>
                 <Link
-                  to="/profile"
+                  to="/driver/notifications"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2 text-slate-300 hover:text-indigo-400 transition-colors font-medium text-sm py-2"
                 >
@@ -166,7 +165,7 @@ const Navbar = () => {
                       {user.firstname?.[0]?.toUpperCase() || 'U'}
                     </div>
                   )}
-                  <span>Profile</span>
+                  <span>Notifications</span>
                 </Link>
                 <button
                   onClick={() => {
@@ -196,4 +195,4 @@ const Navbar = () => {
   )
 }
 
-export default Navbar
+export default DriverNavbar;

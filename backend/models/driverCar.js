@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const driverCarSchema = new mongoose.Schema(
   {
+    driver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Driver',
+      default: null,
+    },
     name: {
       type: String,
       required: true,
