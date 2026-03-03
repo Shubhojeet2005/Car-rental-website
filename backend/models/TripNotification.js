@@ -21,6 +21,22 @@ const tripNotificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    accepted: {
+      type: Boolean,
+      default: false,
+    },
+    startLocation: {
+      type: String,
+      default: '',
+    },
+    endLocation: {
+      type: String,
+      default: '',
+    },
+    startTrip: {
+      type: Boolean,
+      default: false,
+    },
     customerEmail: {
       type: String,
       default: '',

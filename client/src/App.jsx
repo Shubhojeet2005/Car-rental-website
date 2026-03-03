@@ -17,6 +17,7 @@ import DriverNotifications from './pages/Driver/DriverNotifications'
 import AdminLogin from './pages/Admin/AdminLogin'
 import AdminRegister from './pages/Admin/AdminRegister'
 import AdminDashboard from './pages/Admin/AdminDashboard'
+import LiveTracking from './pages/LiveTracking'
 
 const App = () => {
   return (
@@ -36,6 +37,7 @@ const App = () => {
           <Route path="admin/login" element={<AdminLogin/>}/>
           <Route path="admin/register" element={<AdminRegister/>}/>
           <Route path="admin/dashboard" element={<AdminDashboard/>}/>
+          <Route path="live-tracking" element={<LiveTracking/>}/>
           <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="car/:id" element={<CarDetails />} />

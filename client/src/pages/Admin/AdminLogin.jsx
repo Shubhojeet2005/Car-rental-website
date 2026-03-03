@@ -26,6 +26,9 @@ const AdminLogin = () => {
       }
       if (data.admin) {
         localStorage.setItem('user', JSON.stringify({ ...data.admin, role: 'admin' }));
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
         window.dispatchEvent(new Event('userLogin'));
         navigate('/admin/dashboard');
       }

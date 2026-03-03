@@ -280,6 +280,85 @@ router.get('/driver/notifications/:driverId', async (req, res) => {
     }
 });
 
+// Driver accepts a trip notification
+router.put('/driver/notifications/:id/accept', async (req, res) => {
+    try {
+        const notification = await TripNotification.findById(req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
+        notification.accepted = true;
+        await notification.save();
+
+        // emit socket event to customer
+        const io = req.app.locals.io;
+        if (io && notification.customerEmail) {
+            io.to(`customer:${notification.customerEmail}`).emit('tripAccepted', {
+                tripId: notification.tripId,
+                driverId: notification.driverId,
+                message: `Driver has accepted your trip for ${notification.carName}`,
+                pickupDate: notification.pickupDate,
+                pickupTime: notification.pickupTime
+            });
+        }
+
+        res.status(200).json({ message: 'Trip accepted' });
+    } catch (error) {
+        console.error('Error accepting trip notification:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Driver starts trip
+router.put('/driver/notifications/:id/start', async (req, res) => {
+    try {
+        const notification = await TripNotification.findById(req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
+        notification.startTrip = true;
+        await notification.save();
+
+        const io = req.app.locals.io;
+        if (io && notification.customerEmail) {
+            io.to(`customer:${notification.customerEmail}`).emit('tripStarted', {
+                tripId: notification.tripId,
+                driverId: notification.driverId,
+                message: `Driver has started the trip`,
+            });
+        }
+
+        res.status(200).json({ message: 'Trip started' });
+    } catch (error) {
+        console.error('Error starting trip:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Fallback: receive driver location via REST (in case socket not available)
+router.post('/location/driver', async (req, res) => {
+    try {
+        const { tripId, driverId, lat, lng, customerEmail } = req.body;
+        const io = req.app.locals.io;
+        const payload = { tripId, driverId, lat, lng, customerEmail };
+        if (io && customerEmail) io.to(`customer:${customerEmail}`).emit('driverLocationUpdate', payload);
+        res.status(200).json({ message: 'Driver location relayed' });
+    } catch (error) {
+        console.error('Error relaying driver location:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Fallback: receive customer location via REST
+router.post('/location/customer', async (req, res) => {
+    try {
+        const { tripId, customerEmail, lat, lng, driverId } = req.body;
+        const io = req.app.locals.io;
+        const payload = { tripId, customerEmail, lat, lng, driverId };
+        if (io && driverId) io.to(`driver:${driverId}`).emit('customerLocationUpdate', payload);
+        res.status(200).json({ message: 'Customer location relayed' });
+    } catch (error) {
+        console.error('Error relaying customer location:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // Mark notification as read
 router.put('/driver/notifications/:id/read', async (req, res) => {
     try {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../../config';
+import socket from '../../socket';
 
 const DriverNotifications = () => {
   const [user, setUser] = useState(null);
@@ -21,6 +22,10 @@ const DriverNotifications = () => {
         return;
       }
       setUser(parsed);
+      // register driver socket room
+      try {
+        socket.emit('registerDriver', parsed.id);
+      } catch (e) {}
     } catch (_) {
       navigate('/driver-login');
     }
@@ -42,6 +47,21 @@ const DriverNotifications = () => {
       }
     };
     fetchNotifications();
+
+    // listen for real-time events relevant to this driver
+    const handleCustomerLoc = (data) => {
+      console.log('customerLocationUpdate', data);
+    };
+    const handleDriverLoc = (data) => {
+      console.log('driverLocationUpdate', data);
+    };
+    socket.on('customerLocationUpdate', handleCustomerLoc);
+    socket.on('driverLocationUpdate', handleDriverLoc);
+
+    return () => {
+      socket.off('customerLocationUpdate', handleCustomerLoc);
+      socket.off('driverLocationUpdate', handleDriverLoc);
+    };
   }, [user?.id]);
 
   const markAsRead = async (id) => {
@@ -112,6 +132,26 @@ const DriverNotifications = () => {
                       Mark read
                     </button>
                   )}
+
+                       {!n.startTrip && (
+                    <button
+                            onClick={async () => {
+                              // mark as accepted then start trip when driver clicks
+                              try {
+                                await fetch(`${API_URL}/user/driver/notifications/${n._id}/accept`, { method: 'PUT' });
+                                await fetch(`${API_URL}/user/driver/notifications/${n._id}/start`, { method: 'PUT' });
+                                // join driver room already done; emit a start event via socket as well
+                                socket.emit('driverLocationUpdate', { tripId: n.tripId, driverId: user.id, lat: null, lng: null, customerEmail: n.customerEmail });
+                              } catch (err) {
+                                console.error(err);
+                              }
+                            }}
+                      className="text-xs bg-green-600 hover:bg-green-500 px-3 py-1 rounded-lg text-white"
+                    >
+                      Start Trip
+                    </button>
+                  )}
+
                 </div>
               </div>
             ))}

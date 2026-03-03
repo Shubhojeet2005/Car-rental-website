@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { carsData } from './Cars';
 import PlaceInputWithMap from '../components/PlaceInputWithMap';
 import { API_URL } from '../config';
+import DriverNotifications from './Driver/DriverNotifications';
+import socket from '../socket';
 
 const CarDetails = () => {
   const { id } = useParams();
@@ -207,6 +209,22 @@ const CarDetails = () => {
           className="md:col-span-2 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg transition-all active:scale-95 shadow-lg"
         >
           Confirm Booking
+        </button>
+
+         <button 
+          type='button' 
+          className="md:col-span-2 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg transition-all active:scale-95 shadow-lg"
+          onClick={() => {
+            const userData = localStorage.getItem('user');
+            if (userData) {
+              const parsed = JSON.parse(userData);
+              // register customer socket room
+              try { socket.emit('registerCustomer', parsed.email); } catch (e) {}
+            }
+            window.location.href = '/driver/notifications'
+          }}
+        >
+          Get Live location
         </button>
       </form>
     </div>

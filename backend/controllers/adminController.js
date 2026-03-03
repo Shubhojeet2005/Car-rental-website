@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import driverModel from '../models/driver.js';
 import driverCarModel from '../models/driverCar.js';
 import AdminUser from '../models/AdminUser.js';
@@ -57,8 +58,17 @@ export const adminLogin = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid password' });
     }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, role: 'admin' },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+    
     res.status(200).json({
       message: 'Admin login successful',
+      token,
       admin: {
         id: admin._id,
         email: admin.email,
